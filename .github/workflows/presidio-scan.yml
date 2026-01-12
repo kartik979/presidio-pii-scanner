@@ -1,0 +1,40 @@
+name: Presidio PII Scan (Remote Repo)
+
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  presidio-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout scanner repository
+      uses: actions/checkout@v4
+
+    - name: Clone target repository (WebGoat)
+      run: |
+        git clone --depth 1 https://github.com/WebGoat/WebGoat.git target-repo
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Presidio
+      run: |
+        pip install presidio-analyzer presidio-anonymizer spacy
+        python -m spacy download en_core_web_lg
+
+    - name: Run Presidio Scan
+      run: |
+        python presidio_scan.py
+
+    - name: Upload Presidio Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: presidio-report
+        path: presidio-report.json
